@@ -1,0 +1,24 @@
+{
+    "args": [
+        "-std=gnu++17",
+        "-IC:/PROGRA~1/R/R-44~1.1/include",
+        "-DNDEBUG",
+        "-IC:/Users/hawks/AppData/Local/R/win-library/4.4/Rcpp/include",
+        "-DEIGEN_DONT_VECTORIZE",
+        "-nostdinc",
+        "-Ic:/rtools44/x86_64~1.pos/bin/../lib/gcc/x86_64-w64-mingw32.static.posix/13.3.0/include/c++",
+        "-Ic:/rtools44/x86_64~1.pos/bin/../lib/gcc/x86_64-w64-mingw32.static.posix/13.3.0/include/c++/x86_64-w64-mingw32.static.posix",
+        "-Ic:/rtools44/x86_64~1.pos/bin/../lib/gcc/x86_64-w64-mingw32.static.posix/13.3.0/include/c++/backward",
+        "-Ic:/rtools44/x86_64~1.pos/bin/../lib/gcc/x86_64-w64-mingw32.static.posix/13.3.0/include",
+        "-Ic:/rtools44/x86_64~1.pos/bin/../lib/gcc/x86_64-w64-mingw32.static.posix/13.3.0/../../../../include",
+        "-Ic:/rtools44/x86_64~1.pos/bin/../lib/gcc/x86_64-w64-mingw32.static.posix/13.3.0/include-fixed",
+        "-include",
+        "C:/Users/hawks/Documents/fin451/Antigravity/testapp/dataapp/.Rproj.user/56154C6A/compilation-database/mingw64/cpp-definitions.h"
+    ],
+    "pch": "Rcpp",
+    "is_cpp": true,
+    "hash": "1774034821",
+    "compiler": "14560070257236426505",
+    "rversion": "4.4.1",
+    "dbversion": 4
+}
