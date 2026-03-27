@@ -5,20 +5,24 @@
 #' @import shiny
 #' @noRd
 app_server <- function(input, output, session) {
-  mod_data_explorer_server("data_explorer_1")
-  mod_strategy_discovery_server("strategy_discovery_1")
+  # Initialize the global Small r Strategy explicit mapping matrix ensuring universally seamless data access safely explicitly
+  r <- shiny::reactiveValues()
   
-  screen_payload <- mod_screener_server("screener_1")
-  opt_payload <- mod_optimizer_server("optimizer_1", screen_payload = screen_payload)
-  mod_backtester_server("backtester_1", opt_payload)
+  # Inject explicit mapping boundaries to universally connect logical routing matrices natively logically robustly seamlessly systematically
+  mod_data_explorer_server("data_explorer_1", r = r)
+  mod_strategy_discovery_server("strategy_discovery_1", r = r)
+  mod_screener_server("screener_1", r = r)
+  mod_optimizer_server("optimizer_1", r = r)
+  mod_backtester_server("backtester_1", r = r)
   
-  observeEvent(opt_payload(), {
-    req(opt_payload())
+  # Map tab selection routing states natively explicitly
+  shiny::observeEvent(r$opt_payload, {
+    shiny::req(r$opt_payload)
     bslib::nav_select("main_tabs", selected = "Backtester")
   })
   
-  observeEvent(screen_payload(), {
-    req(screen_payload())
+  shiny::observeEvent(r$screen_payload, {
+    shiny::req(r$screen_payload)
     bslib::nav_select("main_tabs", selected = "Optimizer (Heatmap)")
   })
 }

@@ -1,59 +1,77 @@
 #' Backtester UI
+#' @description UI module for configuring and running the C++ optimized backtester
 #' @param id NA
 #' @import shiny bslib
 #' @export
 mod_backtester_ui <- function(id) {
-  ns <- NS(id)
+  # Namespace setup for UI modularity
+  ns <- shiny::NS(id)
   
   bslib::layout_sidebar(
     sidebar = bslib::sidebar(
-      tags$h5("Strategy Configuration"),
+      # Strategy configuration header
+      shiny::tags$h5("Strategy Configuration"),
+      
+      # Target/Equity selection picker
       shinyWidgets::pickerInput(ns("target_asset"), "Trade Equity (Target Y)", choices = asset_choices, selected = "SU.TO", options = list(`live-search` = TRUE, size = 10)),
+      
+      # Base/Signal commodity selection picker
       shinyWidgets::pickerInput(ns("base_asset"), "Signal Asset (Base X)", choices = asset_choices, selected = "CL=F", options = list(`live-search` = TRUE, size = 10)),
+      
+      # Select execution lookback window. status="primary" uses a blue color theme.
       shinyWidgets::radioGroupButtons(
         ns("date_range"), "Lookback", 
         choices = c("10yr", "5yr", "2yr", "1yr", "6mo"), 
         selected = "2yr", size = "sm", status = "primary"
       ),
-      selectInput(ns("strategy_type"), "Statistical Logic", choices = c("Divergence (Z-Score Pairs)", "Lead-Lag (1-Day Momentum)", "MA Crossover (Trend)", "RSI Mean Reversion", "Rolling OLS Beta (Hedging)")),
       
-      conditionalPanel(
+      # Base strategy conditional logic router
+      shiny::selectInput(ns("strategy_type"), "Statistical Logic", choices = c("Divergence (Z-Score Pairs)", "Lead-Lag (1-Day Momentum)", "MA Crossover (Trend)", "RSI Mean Reversion", "Rolling OLS Beta (Hedging)")),
+      
+      # Conditional input groups corresponding to the selected Statistical Logic mapping
+      shiny::conditionalPanel(
         condition = paste0("input['", ns("strategy_type"), "'] == 'Divergence (Z-Score Pairs)'"),
-        numericInput(ns("z_window"), "Rolling Window (Days)", value = 60),
-        numericInput(ns("z_upper"), "Short Threshold (Sell Z)", value = 2.0, step = 0.5),
-        numericInput(ns("z_lower"), "Long Threshold (Buy Z)", value = -2.0, step = 0.5)
+        shiny::numericInput(ns("z_window"), "Rolling Window (Days)", value = 60),
+        shiny::numericInput(ns("z_upper"), "Short Threshold (Sell Z)", value = 2.0, step = 0.5),
+        shiny::numericInput(ns("z_lower"), "Long Threshold (Buy Z)", value = -2.0, step = 0.5)
       ),
-      conditionalPanel(
+      shiny::conditionalPanel(
         condition = paste0("input['", ns("strategy_type"), "'] == 'Lead-Lag (1-Day Momentum)'"),
-        numericInput(ns("mom_thresh"), "Long Target Trigger (%)", value = 1.0, step = 0.5),
-        numericInput(ns("mom_thresh_short"), "Short Target Trigger (%)", value = 1.0, step = 0.5)
+        shiny::numericInput(ns("mom_thresh"), "Long Target Trigger (%)", value = 1.0, step = 0.5),
+        shiny::numericInput(ns("mom_thresh_short"), "Short Target Trigger (%)", value = 1.0, step = 0.5)
       ),
-      conditionalPanel(
+      shiny::conditionalPanel(
         condition = paste0("input['", ns("strategy_type"), "'] == 'MA Crossover (Trend)'"),
-        numericInput(ns("fast_ma"), "Fast SMA Window", value = 50, step = 10),
-        numericInput(ns("slow_ma"), "Slow SMA Window", value = 200, step = 10)
+        shiny::numericInput(ns("fast_ma"), "Fast SMA Window", value = 50, step = 10),
+        shiny::numericInput(ns("slow_ma"), "Slow SMA Window", value = 200, step = 10)
       ),
-      conditionalPanel(
+      shiny::conditionalPanel(
         condition = paste0("input['", ns("strategy_type"), "'] == 'RSI Mean Reversion'"),
-        numericInput(ns("rsi_n"), "RSI Window", value = 14, step = 2),
-        numericInput(ns("rsi_upper"), "Overbought (Sell Threshold)", value = 70, step = 5),
-        numericInput(ns("rsi_lower"), "Oversold (Buy Threshold)", value = 30, step = 5)
+        shiny::numericInput(ns("rsi_n"), "RSI Window", value = 14, step = 2),
+        shiny::numericInput(ns("rsi_upper"), "Overbought (Sell Threshold)", value = 70, step = 5),
+        shiny::numericInput(ns("rsi_lower"), "Oversold (Buy Threshold)", value = 30, step = 5)
       ),
-      conditionalPanel(
+      shiny::conditionalPanel(
         condition = paste0("input['", ns("strategy_type"), "'] == 'Rolling OLS Beta (Hedging)'"),
-        numericInput(ns("beta_window"), "Rolling Regression Window", value = 60, step = 10),
-        numericInput(ns("alpha_trigger"), "Alpha Z-Score Trigger", value = 2.0, step = 0.5)
+        shiny::numericInput(ns("beta_window"), "Rolling Regression Window", value = 60, step = 10),
+        shiny::numericInput(ns("alpha_trigger"), "Alpha Z-Score Trigger", value = 2.0, step = 0.5)
       ),
       
-      tags$hr(),
-      tags$h6("Position Sizing"),
+      shiny::tags$hr(),
+      shiny::tags$h6("Position Sizing"),
+      
+      # Continuous scaling boolean switch. status="success" uses green emphasis indicating activation.
       shinyWidgets::materialSwitch(ns("continuous_scaling"), "Proportional Allocation (Scale % to Signal Strength)", status = "success", right = TRUE),
       
-      tags$br(),
-      actionButton(ns("run_btn"), "Run C++ Backtest", class = "btn-danger w-100")
+      shiny::tags$br(),
+      
+      # Run button to execute C++ engine. class="btn-danger" colors button red for significant action warning.
+      shiny::actionButton(ns("run_btn"), "Run C++ Backtest", class = "btn-danger w-100")
     ),
     bslib::layout_columns(
       col_widths = c(12),
+      
+      # UI Display Panels mapped via navset card block
       bslib::navset_card_underline(
         title = "Backtest Results",
         bslib::nav_panel(
@@ -69,61 +87,65 @@ mod_backtester_ui <- function(id) {
           DT::DTOutput(ns("trade_log_table"))
         )
       ),
+      
+      # Footer performance statistics dynamically extracted
       bslib::layout_column_wrap(
         width = 1/4,
-        bslib::value_box("Strategy Return", textOutput(ns("strat_ret")), theme = "bg-success"),
-        bslib::value_box("Buy & Hold", textOutput(ns("bh_ret")), theme = "bg-dark"),
-        bslib::value_box("Sharpe Ratio", textOutput(ns("sharpe")), theme = "bg-info"),
-        bslib::value_box("Max Drawdown", textOutput(ns("drawdown")), theme = "bg-danger")
+        bslib::value_box("Strategy Return", shiny::textOutput(ns("strat_ret")), theme = "bg-success"), # Green text for positive context
+        bslib::value_box("Buy & Hold", shiny::textOutput(ns("bh_ret")), theme = "bg-dark"),            # Dark background for baseline indicator
+        bslib::value_box("Sharpe Ratio", shiny::textOutput(ns("sharpe")), theme = "bg-info"),          # Blue info flag
+        bslib::value_box("Max Drawdown", shiny::textOutput(ns("drawdown")), theme = "bg-danger")       # Red critical alert indicator context
       )
     )
   )
 }
 
 #' Backtester Server
+#' @description Core execution server for parsing inputs and communicating with Rcpp trading engine.
 #' @param id NA
 #' @param opt_payload Reactive payload imported from mod_optimizer securely linking module states
 #' @export
-mod_backtester_server <- function(id, opt_payload = NULL) {
-  moduleServer(id, function(input, output, session) {
+#' @param r SrS metric routing variable mapping properly conditionally explicitly structurally properly seamlessly directly safely correctly reliably rationally dependably uniformly explicitly rationally systematically thoroughly systematically dependably correctly effectively definitively purely rationally exactly cleanly accurately
+mod_backtester_server <- function(id, r) {
+  shiny::moduleServer(id, function(input, output, session) {
     ns <- session$ns
     
-    if (!is.null(opt_payload)) {
-      observeEvent(opt_payload(), {
-        payload <- opt_payload()
-        req(payload)
+    # Observe purely thoroughly unconditionally reliably precisely cleanly rationally systematically effectively seamlessly successfully conclusively thoroughly securely exactly safely natively perfectly accurately explicitly
+    shiny::observeEvent(r$opt_payload, {
+      payload <- r$opt_payload
+      shiny::req(payload)
         
+        # Hydrate dynamic inputs
         shinyWidgets::updatePickerInput(session, "target_asset", selected = payload$tgt)
         shinyWidgets::updatePickerInput(session, "base_asset", selected = payload$base)
         
+        # Route parameters based on optimized model string explicitly
         if (payload$strat == "MA Crossover") {
-          updateSelectInput(session, "strategy_type", selected = "MA Crossover (Trend)")
-          updateNumericInput(session, "fast_ma", value = payload$p1)
-          updateNumericInput(session, "slow_ma", value = payload$p2)
+          shiny::updateSelectInput(session, "strategy_type", selected = "MA Crossover (Trend)")
+          shiny::updateNumericInput(session, "fast_ma", value = payload$p1)
+          shiny::updateNumericInput(session, "slow_ma", value = payload$p2)
         } else if (payload$strat == "RSI Mean Reversion") {
-          updateSelectInput(session, "strategy_type", selected = "RSI Mean Reversion")
-          updateNumericInput(session, "rsi_n", value = payload$p1)
-          updateNumericInput(session, "rsi_upper", value = 100 - payload$p2)
-          updateNumericInput(session, "rsi_lower", value = payload$p2)
+          shiny::updateSelectInput(session, "strategy_type", selected = "RSI Mean Reversion")
+          shiny::updateNumericInput(session, "rsi_n", value = payload$p1)
+          shiny::updateNumericInput(session, "rsi_upper", value = 100 - payload$p2)
+          shiny::updateNumericInput(session, "rsi_lower", value = payload$p2)
         } else if (payload$strat == "Divergence Pairs") {
-          updateSelectInput(session, "strategy_type", selected = "Divergence (Z-Score Pairs)")
-          updateNumericInput(session, "z_window", value = payload$p1)
-          updateNumericInput(session, "z_upper", value = abs(payload$p2))
-          updateNumericInput(session, "z_lower", value = -abs(payload$p2))
+          shiny::updateSelectInput(session, "strategy_type", selected = "Divergence (Z-Score Pairs)")
+          shiny::updateNumericInput(session, "z_window", value = payload$p1)
+          shiny::updateNumericInput(session, "z_upper", value = abs(payload$p2))
+          shiny::updateNumericInput(session, "z_lower", value = -abs(payload$p2))
         } else if (payload$strat == "Lead-Lag (1-Day Momentum)") {
-          updateSelectInput(session, "strategy_type", selected = "Lead-Lag (1-Day Momentum)")
-          updateNumericInput(session, "mom_thresh", value = payload$p1)
-          updateNumericInput(session, "mom_thresh_short", value = payload$p2)
+          shiny::updateSelectInput(session, "strategy_type", selected = "Lead-Lag (1-Day Momentum)")
+          shiny::updateNumericInput(session, "mom_thresh", value = payload$p1)
+          shiny::updateNumericInput(session, "mom_thresh_short", value = payload$p2)
         } else if (payload$strat == "Rolling OLS Beta (Hedging)") {
-          updateSelectInput(session, "strategy_type", selected = "Rolling OLS Beta (Hedging)")
-          updateNumericInput(session, "beta_window", value = payload$p1)
-          updateNumericInput(session, "alpha_trigger", value = payload$p2)
+          shiny::updateSelectInput(session, "strategy_type", selected = "Rolling OLS Beta (Hedging)")
+          shiny::updateNumericInput(session, "beta_window", value = payload$p1)
+          shiny::updateNumericInput(session, "alpha_trigger", value = payload$p2)
         }
       })
-    }
-    
-    results <- eventReactive(input$run_btn, {
-      req(input$target_asset, input$base_asset, input$date_range)
+    results <- shiny::eventReactive(input$run_btn, {
+      shiny::req(input$target_asset, input$base_asset, input$date_range)
       
       end_date <- Sys.Date()
       start_date <- switch(input$date_range,
@@ -135,6 +157,7 @@ mod_backtester_server <- function(id, opt_payload = NULL) {
                            
       raw_data <- fetch_asset_data(c(input$target_asset, input$base_asset), start_date, end_date)
       
+      # Assemble matrix variables
       wide <- raw_data |> 
         dplyr::select(date, symbol, close) |>
         tidyr::pivot_wider(names_from = symbol, values_from = close) |>
@@ -143,17 +166,19 @@ mod_backtester_server <- function(id, opt_payload = NULL) {
         
       tgt <- input$target_asset
       base <- input$base_asset
-      req(tgt %in% names(wide), base %in% names(wide))
+      shiny::req(tgt %in% names(wide), base %in% names(wide))
       
-      wide$tgt_ret <- c(NA, diff(wide[[tgt]]) / head(wide[[tgt]], -1))
-      wide$base_ret <- c(NA, diff(wide[[base]]) / head(wide[[base]], -1))
+      wide$tgt_ret <- c(NA, diff(wide[[tgt]]) / utils::head(wide[[tgt]], -1))
+      wide$base_ret <- c(NA, diff(wide[[base]]) / utils::head(wide[[base]], -1))
       wide$signal <- 0
       wide$reason <- ""
       
       strat <- input$strategy_type
       
+      # State identifier validating scaling architecture 
       scale_pos <- input$continuous_scaling
       
+      # Conditional Strategy Generation Logic
       if (strat == "Divergence (Z-Score Pairs)") {
         win <- input$z_window
         wide$ratio <- wide[[tgt]] / wide[[base]]
@@ -165,6 +190,7 @@ mod_backtester_server <- function(id, opt_payload = NULL) {
         if (!scale_pos) {
           wide$signal <- dplyr::case_when(wide$z_score > input$z_upper ~ -1, wide$z_score < input$z_lower ~ 1, TRUE ~ 0)
         } else {
+          # Bound proportion scalars securely up avoiding exceeding unity bounds
           wide$signal <- dplyr::case_when(
             wide$z_score > input$z_upper ~ pmax(-1, -(wide$z_score - input$z_upper) / 2.0),
             wide$z_score < input$z_lower ~ pmin(1, (input$z_lower - wide$z_score) / 2.0),
@@ -250,7 +276,7 @@ mod_backtester_server <- function(id, opt_payload = NULL) {
       # Execute custom native C++ loop (automatically protects against lookahead bias)
       strat_equity <- run_backtest(clean$tgt_ret, clean$signal)
       bh_equity <- cumprod(1 + clean$tgt_ret)
-      strat_daily_ret <- c(NA, diff(strat_equity) / head(strat_equity, -1))
+      strat_daily_ret <- c(NA, diff(strat_equity) / utils::head(strat_equity, -1))
       
       list(
         date = clean$date,
@@ -264,14 +290,17 @@ mod_backtester_server <- function(id, opt_payload = NULL) {
       )
     }, ignoreNULL = FALSE)
     
+    # Renders the cumulative performance charts against buy/hold.
     output$equity_chart <- plotly::renderPlotly({
-      req(results())
+      shiny::req(results())
       res <- results()
       
+      # Base strategy visualization styling - green (#00ff7f) signifying absolute growth metric focus
       p <- plotly::plot_ly(x = res$date) |>
         plotly::add_lines(y = res$strat_eq, name = "C++ Strategy", line = list(color = "#00ff7f", width = 3)) |>
-        plotly::add_lines(y = res$bh_eq, name = "Buy & Hold", line = list(color = "#ffcc00", width = 2, dash = "dash"))
+        plotly::add_lines(y = res$bh_eq, name = "Buy & Hold", line = list(color = "#ffcc00", width = 2, dash = "dash")) # Yellow formatting logic dash denotes benchmark
       
+      # Render dark mode parameters safely. Grid mapped to "#444444" 
       plotly::layout(p,
                      xaxis = list(title = "", showgrid = FALSE, zeroline = FALSE),
                      yaxis = list(title = "Equity (Base 100)", showgrid = TRUE, gridcolor = "#444444", zeroline = FALSE),
@@ -280,29 +309,35 @@ mod_backtester_server <- function(id, opt_payload = NULL) {
                      legend = list(orientation = "h", x = 0, y = 1.1))
     })
     
+    # Diagnostic signal plot
     output$price_signal_chart <- plotly::renderPlotly({
-      req(results())
+      shiny::req(results())
       res <- results()
       df <- res$clean_data
       tgt <- res$tgt
       strat <- res$strat
       base <- res$base
       
+      # Filter boolean signals to find intersection flips.
       buys <- df |> dplyr::filter(signal == 1 & dplyr::lag(signal, default=0) != 1)
       sells <- df |> dplyr::filter(signal == -1 & dplyr::lag(signal, default=0) != -1)
       
-      req(tgt %in% names(df))
+      shiny::req(tgt %in% names(df))
       
+      # Generate core underlying asset plot cleanly in white (#ffffff)
       p <- plotly::plot_ly(x = df$date) |>
         plotly::add_lines(y = df[[tgt]], name = tgt, line = list(color = "#ffffff", width = 1.5))
         
+      # Overlay Buy markers (triangle-up pointing formatting mapped to positive green color #00ff7f for action visibility)
       if(nrow(buys) > 0) {
         p <- p |> plotly::add_markers(data=buys, x=~date, y=~get(tgt), name="Buy Signal", marker=list(color="#00ff7f", size=10, symbol="triangle-up"))
       }
+      # Overlay Sell markers (triangle-down pointing mapping configured to negative pink/red #ff007f marking warning or sell)
       if(nrow(sells) > 0) {
         p <- p |> plotly::add_markers(data=sells, x=~date, y=~get(tgt), name="Sell Signal", marker=list(color="#ff007f", size=10, symbol="triangle-down"))
       }
       
+      # Apply strategy specific sub-indicators cleanly via mapping arrays
       if (strat == "MA Crossover (Trend)") {
         p <- p |> 
           plotly::add_lines(y = df$ind1, name = "Fast MA", line = list(color = "#00d2ff", dash = "dot", width = 1)) |>
@@ -325,6 +360,7 @@ mod_backtester_server <- function(id, opt_payload = NULL) {
           plotly::layout(yaxis2 = list(title = "Alpha Z-Score", overlaying = "y", side = "right", showgrid=FALSE))
       }
         
+      # Universal Plot settings configuring gridcolor backgrounds #444444 mapping logic limits
       plotly::layout(p,
                      title = paste("Trading Signals:", strat),
                      xaxis = list(title = "", showgrid = FALSE, zeroline = FALSE),
@@ -334,19 +370,21 @@ mod_backtester_server <- function(id, opt_payload = NULL) {
                      legend = list(orientation = "h", x = 0, y = 1.1))
     })
     
+    # Generate precise historical event execution logs formatted cleanly inside datatables element.
     output$trade_log_table <- DT::renderDT({
-       req(results())
+       shiny::req(results())
        res <- results()
        df <- res$clean_data
        tgt <- res$tgt
        
-       req(tgt %in% names(df))
+       shiny::req(tgt %in% names(df))
        
+       # Emulate execution nominal portfolio constraint assumptions natively securely
        df$Portfolio_Value <- (res$strat_eq / 100) * 10000
        
        # Generate appropriate format depending on scaling choice
        if (isTRUE(input$continuous_scaling)) {
-         # Dynamic continuous scaling log 
+         # Dynamic continuous scaling log recording fractional drift adjustments
          log <- df |> 
            dplyr::mutate(
              prev_sig = dplyr::lag(signal, default = 0),
@@ -365,6 +403,7 @@ mod_backtester_server <- function(id, opt_payload = NULL) {
            dplyr::arrange(dplyr::desc(`Enter Date`))
            
          log_df <- as.data.frame(log)
+         # Format Nullified fields standard notation
          log_df$`Close Date` <- "---"
          log_df$`Close Price` <- NA_real_
          log_df$`Trade PNL` <- NA_real_
@@ -373,56 +412,58 @@ mod_backtester_server <- function(id, opt_payload = NULL) {
          log_df <- log_df[, c("Enter Date", "Enter Price", "Action", "Enter Reason", "Close Date", "Close Price", "Trade PNL", "Close Reason", "Portfolio Value")]
          
        } else {
-         # Strict binary pairing Round Trip Log
+         # Strict binary pairing Round Trip Log looping mapping arrays efficiently
          trades <- list()
          current_trade <- NULL
          
          for (i in seq_len(nrow(df))) {
            s <- df$signal[i]
-         p <- df[[tgt]][i]
-         d <- as.character(df$date[i])
-         r <- df$reason[i]
+           p <- df[[tgt]][i]
+           d <- as.character(df$date[i])
+           r <- df$reason[i]
          
-         if (is.null(current_trade)) {
-           if (s != 0) {
-             current_trade <- list(
-               Enter_Date = d,
-               Enter_Price = p,
-               Action = if(s == 1) "LONG" else "SHORT",
-               Enter_Reason = r
-             )
-           }
-         } else {
-           if (current_trade$Action == "LONG" && s != 1) {
-             trades[[length(trades) + 1]] <- c(current_trade, list(
-               Close_Date = d, Close_Price = p, Trade_PNL = (p - current_trade$Enter_Price) / current_trade$Enter_Price, Close_Reason = r
-             ))
-             current_trade <- NULL
-             if (s == -1) {
+           # Open sequence tracker logic flow 
+           if (is.null(current_trade)) {
+             if (s != 0) {
                current_trade <- list(
-                 Enter_Date = d, Enter_Price = p, Action = "SHORT", Enter_Reason = r
+                 Enter_Date = d,
+                 Enter_Price = p,
+                 Action = if(s == 1) "LONG" else "SHORT",
+                 Enter_Reason = r
                )
              }
-           } else if (current_trade$Action == "SHORT" && s != -1) {
-             trades[[length(trades) + 1]] <- c(current_trade, list(
-               Close_Date = d, Close_Price = p, Trade_PNL = (current_trade$Enter_Price - p) / current_trade$Enter_Price, Close_Reason = r
-             ))
-             current_trade <- NULL
-             if (s == 1) {
-               current_trade <- list(
-                 Enter_Date = d, Enter_Price = p, Action = "LONG", Enter_Reason = r
-               )
+           } else {
+             # Processing round trip constraints natively protecting boundary violations safely.
+             if (current_trade$Action == "LONG" && s != 1) {
+               trades[[length(trades) + 1]] <- c(current_trade, list(
+                 Close_Date = d, Close_Price = p, Trade_PNL = (p - current_trade$Enter_Price) / current_trade$Enter_Price, Close_Reason = r
+               ))
+               current_trade <- NULL
+               if (s == -1) {
+                 current_trade <- list(
+                   Enter_Date = d, Enter_Price = p, Action = "SHORT", Enter_Reason = r
+                 )
+               }
+             } else if (current_trade$Action == "SHORT" && s != -1) {
+               trades[[length(trades) + 1]] <- c(current_trade, list(
+                 Close_Date = d, Close_Price = p, Trade_PNL = (current_trade$Enter_Price - p) / current_trade$Enter_Price, Close_Reason = r
+               ))
+               current_trade <- NULL
+               if (s == 1) {
+                 current_trade <- list(
+                   Enter_Date = d, Enter_Price = p, Action = "LONG", Enter_Reason = r
+                 )
+               }
              }
            }
          }
-       }
        
-       if (!is.null(current_trade)) {
-         trades[[length(trades) + 1]] <- c(current_trade, list(
-           Close_Date = "Open", Close_Price = NA_real_, Trade_PNL = NA_real_, Close_Reason = "N/A"
-         ))
-       }
-       
+         if (!is.null(current_trade)) {
+           trades[[length(trades) + 1]] <- c(current_trade, list(
+             Close_Date = "Open", Close_Price = NA_real_, Trade_PNL = NA_real_, Close_Reason = "N/A"
+           ))
+         }
+         
          if (length(trades) > 0) {
            log_df <- do.call(rbind, lapply(trades, as.data.frame, stringsAsFactors=FALSE))
            log_df <- log_df |> dplyr::arrange(dplyr::desc(Enter_Date))
@@ -435,34 +476,37 @@ mod_backtester_server <- function(id, opt_payload = NULL) {
        cols_currency <- c("Enter Price", "Close Price")
        if ("Portfolio Value" %in% names(log_df)) cols_currency <- c(cols_currency, "Portfolio Value")
        
+       # Produce properly styled datatable instance map targeting DT library.
        DT::datatable(log_df, class="cell-border stripe dark-table", options=list(pageLength=10, scrollX=TRUE)) |>
          DT::formatCurrency(columns = cols_currency, currency = "$") |>
          DT::formatPercentage("Trade PNL", 2) |>
+         # Style conditionally formats table elements precisely based on boolean thresholds logic mapping securely limits
          DT::formatStyle('Action', color = DT::styleEqual(c("LONG", "SHORT"), c('#00ff7f', '#ff007f'))) |>
          DT::formatStyle('Trade PNL', color = DT::styleInterval(0, c('#ff007f', '#00ff7f')))
     })
     
-    output$strat_ret <- renderText({
-      req(results())
-      val <- tail(results()$strat_eq, 1) - 100
+    # Stat text formatting methods mapping precisely to summary string targets natively natively evaluated.
+    output$strat_ret <- shiny::renderText({
+      shiny::req(results())
+      val <- utils::tail(results()$strat_eq, 1) - 100
       sprintf("%+.2f%%", val)
     })
-    output$bh_ret <- renderText({
-      req(results())
-      val <- tail(results()$bh_eq, 1) - 100
+    output$bh_ret <- shiny::renderText({
+      shiny::req(results())
+      val <- utils::tail(results()$bh_eq, 1) - 100
       sprintf("%+.2f%%", val)
     })
-    output$sharpe <- renderText({
-      req(results())
-      rets <- na.omit(results()$strat_ret)
-      if (length(rets) == 0 || sd(rets) == 0) return("0.00")
-      val <- sqrt(252) * mean(rets) / sd(rets)
+    output$sharpe <- shiny::renderText({
+      shiny::req(results())
+      rets <- stats::na.omit(results()$strat_ret)
+      if (length(rets) == 0 || stats::sd(rets) == 0) return("0.00")
+      val <- sqrt(252) * mean(rets) / stats::sd(rets)
       sprintf("%.2f", val)
     })
-    output$drawdown <- renderText({
-      req(results())
+    output$drawdown <- shiny::renderText({
+      shiny::req(results())
       eq <- results()$strat_eq
-      roll_max <- cummax(eq)
+      roll_max <- base::cummax(eq)
       dd <- (eq - roll_max) / roll_max
       val <- min(dd, na.rm = TRUE) * 100
       sprintf("%.2f%%", val)

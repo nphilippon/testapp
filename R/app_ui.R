@@ -5,11 +5,14 @@
 #' @import shiny
 #' @noRd
 app_ui <- function(request) {
-  tagList(
+  # Wrap the entire UI definition in a shiny tagList
+  shiny::tagList(
     # Leave this function for adding external resources
     golem_add_external_resources(),
-    # Your application UI logic
+    
+    # Core Application UI logic using bs_theme
     bslib::page_navbar(
+      # Apply preset darkly theme for a modern aesthetic
       theme = bslib::bs_theme(preset = "darkly"),
       title = "Commodity Strategy Discovery",
       id = "main_tabs",
@@ -42,14 +45,14 @@ app_ui <- function(request) {
 #' @importFrom golem add_resource_path activate_js favicon bundle_resources
 #' @noRd
 golem_add_external_resources <- function() {
-  add_resource_path(
+  golem::add_resource_path(
     "www",
     app_sys("app/www")
   )
 
-  tags$head(
-    favicon(),
-    bundle_resources(
+  shiny::tags$head(
+    golem::favicon(),
+    golem::bundle_resources(
       path = app_sys("app/www"),
       app_title = "dataapp"
     )

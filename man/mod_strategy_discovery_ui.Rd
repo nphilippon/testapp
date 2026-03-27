@@ -10,5 +10,5 @@ mod_strategy_discovery_ui(id)
 \item{id}{NA}
 }
 \description{
-Strategy Discovery UI
+UI for running statistical discovery and quantitative scanning
 }

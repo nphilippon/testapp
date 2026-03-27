@@ -4,11 +4,13 @@
 \alias{mod_backtester_server}
 \title{Backtester Server}
 \usage{
-mod_backtester_server(id)
+mod_backtester_server(id, opt_payload = NULL)
 }
 \arguments{
 \item{id}{NA}
+
+\item{opt_payload}{Reactive payload imported from mod_optimizer securely linking module states}
 }
 \description{
-Backtester Server
+Core execution server for parsing inputs and communicating with Rcpp trading engine.
 }

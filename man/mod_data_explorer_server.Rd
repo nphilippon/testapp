@@ -10,5 +10,5 @@ mod_data_explorer_server(id)
 \item{id}{NA}
 }
 \description{
-Data Explorer Server
+Server logic for retrieving, formatting, and charting market data
 }

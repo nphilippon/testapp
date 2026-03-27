@@ -10,5 +10,5 @@ mod_strategy_discovery_server(id)
 \item{id}{NA}
 }
 \description{
-Strategy Discovery Server
+Server module for statistical calculations and chart rendering
 }

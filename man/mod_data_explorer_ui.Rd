@@ -10,5 +10,5 @@ mod_data_explorer_ui(id)
 \item{id}{NA}
 }
 \description{
-Data Explorer UI
+UI for interactive charting of historical market prices
 }

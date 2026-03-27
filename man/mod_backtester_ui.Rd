@@ -10,5 +10,5 @@ mod_backtester_ui(id)
 \item{id}{NA}
 }
 \description{
-Backtester UI
+UI module for configuring and running the C++ optimized backtester
 }
